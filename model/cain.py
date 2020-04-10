@@ -50,7 +50,7 @@ class CAIN(nn.Module):
     def __init__(self, depth=3):
         super(CAIN, self).__init__()
         
-        self.encoder = Encoder(in_channels=3, depth=depth)
+        self.encoder = Encoder(in_channels=1, depth=depth)
         self.decoder = Decoder(depth=depth)
 
     def forward(self, x1, x2):

@@ -160,6 +160,7 @@ def test(args, epoch, eval_alpha=0.5):
 
             # Build input batch
             im1, im2, gt = utils.build_input(images, imgpaths, is_training=False)
+            # print(im1.shape, im2.shape, gt.shape)
 
             # Forward
             out, feats = model(im1, im2)
@@ -175,16 +176,14 @@ def test(args, epoch, eval_alpha=0.5):
             utils.eval_metrics(out, gt, psnrs, ssims, lpips)
 
             # Log examples that have bad performance
-            if (ssims.val < 0.9 or psnrs.val < 25) and epoch > 50:
-                print(imgpaths)
+            if (psnrs.val < 30) and epoch > 50:
                 print("\nLoss: %f, PSNR: %f, SSIM: %f, LPIPS: %f" %
                       (losses['total'].val, psnrs.val, ssims.val, lpips.val))
                 print(imgpaths[1][-1])
 
             # Save result images
-            if ((epoch + 1) % 1 == 0 and i < 20) or args.mode == 'test':
+            if ((epoch + 1) % 50 == 0 and i < 20) or args.mode == 'test':
                 savepath = os.path.join('checkpoint', args.exp_name, save_folder)
-
                 for b in range(images[0].size(0)):
                     paths = imgpaths[1][b].split('/')
                     fp = os.path.join(savepath, paths[-3], paths[-2])
@@ -192,8 +191,8 @@ def test(args, epoch, eval_alpha=0.5):
                         os.makedirs(fp)
                     # remove '.png' extension
                     fp = os.path.join(fp, paths[-1][:-4])
-                    utils.save_image(out[b], "%s.png" % fp)
-                    
+                    utils.save_image(out[b, 0], "%s.tif" % fp)
+
     # Print progress
     print('im_processed: {:d}/{:d} {:.3f}s   \r'.format(i + 1, len(test_loader), time.time() - t))
     print("Loss: %f, PSNR: %f, SSIM: %f, LPIPS: %f\n" %
