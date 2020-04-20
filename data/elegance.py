@@ -23,7 +23,7 @@ class Eleganceset(Dataset):
 
         for subfolder in subfolders:
             subfolder_file_list = sorted(glob.glob(subfolder + '/*'))
-            subfolder_file_list = subfolder_file_list[1:-1]
+            subfolder_file_list = subfolder_file_list[2:-2]
             self.file_list.extend(subfolder_file_list)
         
         self.transforms = transforms.Compose([
@@ -47,12 +47,21 @@ class Eleganceset(Dataset):
         current_img_path = self.file_list[index]
         current_idx_string = current_img_path[-7:-4]
         current_idx = int(current_idx_string)
-        
-        past_idx_string = '{:03d}'.format(current_idx - 1)
-        past_img_path = current_img_path.replace(current_idx_string, past_idx_string)
 
-        future_idx_string = '{:03d}'.format(current_idx + 1)
-        future_img_path = current_img_path.replace(current_idx_string, future_idx_string)
+        seed = random.randint(0, 100)
+        if seed % 2 == 0:
+            past_idx_string = '{:03d}'.format(current_idx - 1)
+            past_img_path = current_img_path.replace(current_idx_string, past_idx_string)
+
+            future_idx_string = '{:03d}'.format(current_idx + 1)
+            future_img_path = current_img_path.replace(current_idx_string, future_idx_string)
+
+        else:
+            past_idx_string = '{:03d}'.format(current_idx - 2)
+            past_img_path = current_img_path.replace(current_idx_string, past_idx_string)
+
+            future_idx_string = '{:03d}'.format(current_idx + 2)
+            future_img_path = current_img_path.replace(current_idx_string, future_idx_string)
 
         imgpaths = [past_img_path, current_img_path, future_img_path]
 
