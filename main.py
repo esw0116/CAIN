@@ -6,6 +6,7 @@ import shutil
 import random
 
 import torch
+from torch.nn import functional as F
 import numpy as np
 from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
@@ -139,6 +140,8 @@ def train(args, epoch):
 def test(args, epoch, eval_alpha=0.5):
     print('Evaluating for epoch = %d' % epoch)
     losses, psnrs, ssims, lpips = utils.init_meters(args.loss)
+    losses_linear, psnrs_linear, ssims_linear, lpips_linear = utils.init_meters(args.loss)
+
     model.eval()
     criterion.eval()
 
@@ -159,21 +162,31 @@ def test(args, epoch, eval_alpha=0.5):
         for i, (images, imgpaths) in enumerate(tqdm(test_loader)):
 
             # Build input batch
-            im1, im2, gt = utils.build_input(images, imgpaths, is_training=False)
+            im1, im2, gt1, gt2, gt3 = utils.build_input(images, imgpaths, is_training=False)
             # print(im1.shape, im2.shape, gt.shape)
+            h, w = im1.shape[-2], im1.shape[-1]
+            # print(im1.mean(), gt2.mean(), im1.shape, gt2.shape)
 
-            # Forward
-            out, feats = model(im1, im2)
+            # Use linear interpolation methods
+            im_cat = torch.stack((im1, im2), dim=-1)
+            im_interp = F.interpolate(im_cat, size=(h,w,5), mode='trilinear', align_corners=True)
 
+            # Forward - GT2
+            out2, feats = model(im1, im2)
+            # print(out2.mean(), out2.shape)
             # Save loss values
-            loss, loss_specific = criterion(out, gt, None, feats)
+            loss, loss_specific = criterion(out2, gt2, None, feats)
             for k, v in losses.items():
                 if k != 'total':
                     v.update(loss_specific[k].item())
             losses['total'].update(loss.item())
 
             # Evaluate metrics
-            utils.eval_metrics(out, gt, psnrs, ssims, lpips)
+            utils.eval_metrics(out2, gt2, psnrs, ssims, lpips)
+
+            # Linear interpolation method
+            out_linear2 = im_interp[..., 2]
+            utils.eval_metrics(out_linear2, gt2, psnrs_linear, ssims_linear, lpips_linear)
 
             # Log examples that have bad performance
             if (psnrs.val < 30) and epoch > 50:
@@ -182,7 +195,40 @@ def test(args, epoch, eval_alpha=0.5):
                 print(imgpaths[1][-1])
 
             # Save result images
-            if ((epoch + 1) % 50 == 0 and i < 20) or args.mode == 'test':
+            if ((epoch + 1) % 20 == 0 and i < 20) or args.mode == 'test':
+                savepath = os.path.join('checkpoint', args.exp_name, save_folder)
+                for b in range(images[0].size(0)):
+                    paths = imgpaths[2][b].split('/')
+                    fp = os.path.join(savepath, paths[-3], paths[-2])
+                    if not os.path.exists(fp):
+                        os.makedirs(fp)
+                    # remove '.png' extension
+                    fp = os.path.join(fp, paths[-1][:-4])
+                    utils.save_image(out2[b, 0], "%s.tif" % fp)
+                    utils.save_image(out2[b, 0], "%s_linear.tif" % fp)
+            '''
+            # Forward - GT1
+            out1, feats = model(im1, out2)
+            print(out1.max(), out1.shape)
+
+            # Save loss valuesa
+            loss, loss_specific = criterion(out1, gt1, None, feats)
+            for k, v in losses.items():
+                if k != 'total':
+                    v.update(loss_specific[k].item())
+            losses['total'].update(loss.item())
+
+            # Evaluate metrics
+            utils.eval_metrics(out1, gt1, psnrs, ssims, lpips)
+
+            # Log examples that have bad performance
+            if (psnrs.val < 30) and epoch > 50:
+                print("\nLoss: %f, PSNR: %f, SSIM: %f, LPIPS: %f"   %
+                      (losses['total'].val, psnrs.val, ssims.val, lpips.val))
+                print(imgpaths[1][-1])
+
+            # Save result images
+            if ((epoch + 1) % 50 == 1 and i < 20) or args.mode == 'test':
                 savepath = os.path.join('checkpoint', args.exp_name, save_folder)
                 for b in range(images[0].size(0)):
                     paths = imgpaths[1][b].split('/')
@@ -191,18 +237,55 @@ def test(args, epoch, eval_alpha=0.5):
                         os.makedirs(fp)
                     # remove '.png' extension
                     fp = os.path.join(fp, paths[-1][:-4])
-                    utils.save_image(out[b, 0], "%s.tif" % fp)
+                    utils.save_image(out1[b, 0], "%s.tif" % fp)
+
+            
+            # Forward - GT3
+            out3, feats = model(out2, im2)
+            print(out3.max(), out3.shape)
+
+            # Save loss values
+            loss, loss_specific = criterion(out3, gt3, None, feats)
+            for k, v in losses.items():
+                if k != 'total':
+                    v.update(loss_specific[k].item())
+            losses['total'].update(loss.item())
+
+            # Evaluate metrics
+            utils.eval_metrics(out3, gt3, psnrs, ssims, lpips)
+
+            # Log examples that have bad performance
+            if (psnrs.val < 30) and epoch > 50:
+                print("\nLoss: %f, PSNR: %f, SSIM: %f, LPIPS: %f" %
+                      (losses['total'].val, psnrs.val, ssims.val, lpips.val))
+                print(imgpaths[1][-1])
+
+            # Save result images
+            if ((epoch + 1) % 50 == 1 and i < 20) or args.mode == 'test':
+                savepath = os.path.join('checkpoint', args.exp_name, save_folder)
+                for b in range(images[0].size(0)):
+                    paths = imgpaths[3][b].split('/')
+                    fp = os.path.join(savepath, paths[-3], paths[-2])
+                    if not os.path.exists(fp):
+                        os.makedirs(fp)
+                    # remove '.png' extension
+                    fp = os.path.join(fp, paths[-1][:-4])
+                    utils.save_image(out3[b, 0], "%s.tif" % fp)
+                    '''
 
     # Print progress
     print('im_processed: {:d}/{:d} {:.3f}s   \r'.format(i + 1, len(test_loader), time.time() - t))
-    print("Loss: %f, PSNR: %f, SSIM: %f, LPIPS: %f\n" %
-          (losses['total'].avg, psnrs.avg, ssims.avg, lpips.avg))
+    print("Loss: %f, PSNR: %f, SSIM: %f, LPIPS: %f\n" % (losses['total'].avg, psnrs.avg, ssims.avg, lpips.avg))
+    print('Linear Interpolation Cases')
+    print("PSNR: %f, SSIM: %f, LPIPS: %f\n" % (psnrs_linear.avg, ssims_linear.avg, lpips_linear.avg))
 
     # Save psnr & ssim
     save_fn = os.path.join('checkpoint', args.exp_name, save_folder, 'results.txt')
     with open(save_fn, 'a') as f:
         f.write("PSNR: %f, SSIM: %f, LPIPS: %f\n" %
                 (psnrs.avg, ssims.avg, lpips.avg))
+        f.write("Linear\nPSNR: %f, SSIM: %f, LPIPS: %f\n" %
+                (psnrs_linear.avg, ssims_linear.avg, lpips_linear.avg))
 
     # Log to TensorBoard
     if args.mode != 'test':

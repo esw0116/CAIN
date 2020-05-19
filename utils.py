@@ -30,8 +30,8 @@ from pytorch_msssim import ssim_matlab as ssim_pth
 # Training Helper Functions for making main.py clean
 ##########################
 
-def load_dataset(dataset_str, data_root, batch_size, test_batch_size, num_workers, test_mode='medium', img_fmt='png'):
 
+def load_dataset(dataset_str, data_root, batch_size, test_batch_size, num_workers, test_mode='medium', img_fmt='png'):
     if dataset_str == 'snufilm':
         from data.snufilm import get_loader
         test_loader = get_loader('test', data_root, test_batch_size, shuffle=False, num_workers=num_workers, test_mode=test_mode)
@@ -42,6 +42,9 @@ def load_dataset(dataset_str, data_root, batch_size, test_batch_size, num_worker
         from data.aim import get_loader
     elif dataset_str == 'elegance':
         from data.elegance import get_loader
+        train_loader = get_loader('train', data_root, batch_size, shuffle=True, num_workers=num_workers)
+        test_loader = get_loader('test', data_root, test_batch_size, shuffle=False, num_workers=num_workers)
+        return train_loader, test_loader
     elif dataset_str == 'custom':
         from data.video import get_loader
         test_loader = get_loader('test', data_root, test_batch_size, img_fmt=img_fmt, shuffle=False, num_workers=num_workers, n_frames=1)
@@ -59,18 +62,33 @@ def load_dataset(dataset_str, data_root, batch_size, test_batch_size, num_worker
 
 
 def build_input(images, imgpaths, is_training=True, include_edge=False, device=torch.device('cuda')):
-    if isinstance(images[0], list):
-        images_gathered = [None, None, None]
-        for j in range(len(images[0])):  # 3
-            _images = [images[k][j] for k in range(len(images))]
-            images_gathered[j] = torch.cat(_images, 0)
-        imgpaths = [p for _ in images for p in imgpaths]
-        images = images_gathered
+    if is_training:
+        if isinstance(images[0], list):
+            images_gathered = [None, None, None]
+            for j in range(len(images[0])):  # 3
+                _images = [images[k][j] for k in range(len(images))]
+                images_gathered[j] = torch.cat(_images, 0)
+            imgpaths = [p for _ in images for p in imgpaths]
+            images = images_gathered
 
-    im1, im2 = images[0].to(device), images[2].to(device)
-    gt = images[1].to(device)
+        im1, im2 = images[0].to(device), images[2].to(device)
+        gt = images[1].to(device)
 
-    return im1, im2, gt
+        return im1, im2, gt
+
+    else:
+        if isinstance(images[0], list):
+            images_gathered = [None, None, None]
+            for j in range(len(images[0])):  # 3
+                _images = [images[k][j] for k in range(len(images))]
+                images_gathered[j] = torch.cat(_images, 0)
+            imgpaths = [p for _ in images for p in imgpaths]
+            images = images_gathered
+
+        im1, im2 = images[0].to(device), images[4].to(device)
+        gt1, gt2, gt3 = images[1].to(device), images[2].to(device), images[3].to(device)
+
+        return im1, im2, gt1, gt2, gt3
 
 
 def load_checkpoint(args, model, optimizer, fix_loaded=False):

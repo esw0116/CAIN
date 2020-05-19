@@ -285,7 +285,6 @@ class Loss(nn.modules.loss._Loss):
         if args.cuda:# and args.n_GPUs > 1:
             self.loss_module = nn.DataParallel(self.loss_module)
 
-
     def forward(self, sr, hr, model_enc=None, feats=None, fake_imgs=None):
         loss = 0
         losses = {}
