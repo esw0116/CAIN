@@ -31,7 +31,7 @@ from pytorch_msssim import ssim_matlab as ssim_pth
 ##########################
 
 
-def load_dataset(dataset_str, data_root, batch_size, test_batch_size, num_workers, test_mode='medium', img_fmt='png'):
+def load_dataset(args, dataset_str, data_root, batch_size, test_batch_size, num_workers, test_mode='medium', img_fmt='png'):
     if dataset_str == 'snufilm':
         from data.snufilm import get_loader
         test_loader = get_loader('test', data_root, test_batch_size, shuffle=False, num_workers=num_workers, test_mode=test_mode)
@@ -42,8 +42,8 @@ def load_dataset(dataset_str, data_root, batch_size, test_batch_size, num_worker
         from data.aim import get_loader
     elif dataset_str == 'elegance':
         from data.elegance import get_loader
-        train_loader = get_loader('train', data_root, batch_size, shuffle=True, num_workers=num_workers)
-        test_loader = get_loader('test', data_root, test_batch_size, shuffle=False, num_workers=num_workers)
+        train_loader = get_loader('train', data_root, batch_size, shuffle=True, num_workers=num_workers, denoise=args.denoise, shift=args.shift)
+        test_loader = get_loader('test', data_root, test_batch_size, shuffle=False, num_workers=num_workers, denoise=args.denoise, shift=args.shift)
         return train_loader, test_loader
     elif dataset_str == 'custom':
         from data.video import get_loader

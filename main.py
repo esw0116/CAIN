@@ -37,7 +37,7 @@ if args.cuda:
 
 ##### Load Dataset #####
 train_loader, test_loader = utils.load_dataset(
-    args.dataset, args.data_root, args.batch_size, args.test_batch_size, args.num_workers, args.test_mode)
+    args, args.dataset, args.data_root, args.batch_size, args.test_batch_size, args.num_workers, args.test_mode)
 
 
 ##### Build Model #####
@@ -165,7 +165,7 @@ def test(args, epoch, eval_alpha=0.5):
             im1, im2, gt1, gt2, gt3 = utils.build_input(images, imgpaths, is_training=False)
             # print(im1.shape, im2.shape, gt.shape)
             h, w = im1.shape[-2], im1.shape[-1]
-            # print(im1.mean(), gt2.mean(), im1.shape, gt2.shape)
+            im1_ref, im2_ref = im1.clone(), im2.clone()
 
             # Use linear interpolation methods
             im_cat = torch.stack((im1, im2), dim=-1)
@@ -173,7 +173,6 @@ def test(args, epoch, eval_alpha=0.5):
 
             # Forward - GT2
             out2, feats = model(im1, im2)
-            # print(out2.mean(), out2.shape)
             # Save loss values
             loss, loss_specific = criterion(out2, gt2, None, feats)
             for k, v in losses.items():
@@ -192,10 +191,9 @@ def test(args, epoch, eval_alpha=0.5):
             if (psnrs.val < 30) and epoch > 50:
                 print("\nLoss: %f, PSNR: %f, SSIM: %f, LPIPS: %f" %
                       (losses['total'].val, psnrs.val, ssims.val, lpips.val))
-                print(imgpaths[1][-1])
 
             # Save result images
-            if ((epoch + 1) % 20 == 0 and i < 20) or args.mode == 'test':
+            if ((epoch + 1) % 50 == 0 and i < 20) or args.mode == 'test':
                 savepath = os.path.join('checkpoint', args.exp_name, save_folder)
                 for b in range(images[0].size(0)):
                     paths = imgpaths[2][b].split('/')
@@ -206,10 +204,11 @@ def test(args, epoch, eval_alpha=0.5):
                     fp = os.path.join(fp, paths[-1][:-4])
                     utils.save_image(out2[b, 0], "%s.tif" % fp)
                     utils.save_image(out2[b, 0], "%s_linear.tif" % fp)
-            '''
+
             # Forward - GT1
-            out1, feats = model(im1, out2)
-            print(out1.max(), out1.shape)
+            #print(im1.mean(), im1_ref.mean(), out2.mean())
+            out1, feats = model(im1_ref, out2)
+            #print(out1.mean())
 
             # Save loss valuesa
             loss, loss_specific = criterion(out1, gt1, None, feats)
@@ -225,10 +224,9 @@ def test(args, epoch, eval_alpha=0.5):
             if (psnrs.val < 30) and epoch > 50:
                 print("\nLoss: %f, PSNR: %f, SSIM: %f, LPIPS: %f"   %
                       (losses['total'].val, psnrs.val, ssims.val, lpips.val))
-                print(imgpaths[1][-1])
 
             # Save result images
-            if ((epoch + 1) % 50 == 1 and i < 20) or args.mode == 'test':
+            if ((epoch + 1) % 50 == 0 and i < 20) or args.mode == 'test':
                 savepath = os.path.join('checkpoint', args.exp_name, save_folder)
                 for b in range(images[0].size(0)):
                     paths = imgpaths[1][b].split('/')
@@ -238,11 +236,11 @@ def test(args, epoch, eval_alpha=0.5):
                     # remove '.png' extension
                     fp = os.path.join(fp, paths[-1][:-4])
                     utils.save_image(out1[b, 0], "%s.tif" % fp)
-
+                    utils.save_image(out2[b, 0], "%s_linear.tif" % fp)
             
             # Forward - GT3
-            out3, feats = model(out2, im2)
-            print(out3.max(), out3.shape)
+            out3, feats = model(out2, im2_ref)
+            #print(out3.max(), out3.shape)
 
             # Save loss values
             loss, loss_specific = criterion(out3, gt3, None, feats)
@@ -258,10 +256,9 @@ def test(args, epoch, eval_alpha=0.5):
             if (psnrs.val < 30) and epoch > 50:
                 print("\nLoss: %f, PSNR: %f, SSIM: %f, LPIPS: %f" %
                       (losses['total'].val, psnrs.val, ssims.val, lpips.val))
-                print(imgpaths[1][-1])
 
             # Save result images
-            if ((epoch + 1) % 50 == 1 and i < 20) or args.mode == 'test':
+            if ((epoch + 1) % 50 == 0 and i < 20) or args.mode == 'test':
                 savepath = os.path.join('checkpoint', args.exp_name, save_folder)
                 for b in range(images[0].size(0)):
                     paths = imgpaths[3][b].split('/')
@@ -271,7 +268,7 @@ def test(args, epoch, eval_alpha=0.5):
                     # remove '.png' extension
                     fp = os.path.join(fp, paths[-1][:-4])
                     utils.save_image(out3[b, 0], "%s.tif" % fp)
-                    '''
+                    utils.save_image(out2[b, 0], "%s_linear.tif" % fp)
 
     # Print progress
     print('im_processed: {:d}/{:d} {:.3f}s   \r'.format(i + 1, len(test_loader), time.time() - t))

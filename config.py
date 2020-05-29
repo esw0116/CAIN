@@ -17,6 +17,8 @@ data_arg.add_argument('--dataset', type=str, default='vimeo90k')
 data_arg.add_argument('--num_frames', type=int, default=3)
 data_arg.add_argument('--data_root', type=str, default='data/dataset/Project_Samsung')
 data_arg.add_argument('--img_fmt', type=str, default='tif')
+data_arg.add_argument('--denoise', action='store_true')
+data_arg.add_argument('--shift', action='store_true')
 
 # Model
 model_arg = add_argument_group('Model')

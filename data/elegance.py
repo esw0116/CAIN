@@ -8,29 +8,37 @@ from PIL import Image
 import random
 
 class Eleganceset(Dataset):
-    def __init__(self, data_root, is_training, denoise):
+    def __init__(self, data_root, is_training, denoise, shift):
         self.data_root = data_root
         self.training = is_training
 
         if denoise:
-            train_folder = os.path.join(self.data_root, 'elegance', 'train/LR_bicubic/X2_denoise')
-            val_folder = os.path.join(self.data_root, 'elegance', 'val/LR_bicubic/X2_denoise')
+            if shift:
+                train_folder = os.path.join(self.data_root, 'elegance', 'train/LR_bicubic/X2_denoise_crop')
+                val_folder = os.path.join(self.data_root, 'elegance', 'val/LR_bicubic/X2_denoise_crop')
+            else:
+                train_folder = os.path.join(self.data_root, 'elegance', 'train/LR_bicubic/X2_denoise')
+                val_folder = os.path.join(self.data_root, 'elegance', 'val/LR_bicubic/X2_denoise')
         else:
-            train_folder = os.path.join(self.data_root, 'elegance', 'train/LR_bicubic/X2')
-            val_folder = os.path.join(self.data_root, 'elegance', 'val/LR_bicubic/X2')
+            if shift:
+                train_folder = os.path.join(self.data_root, 'elegance', 'train/LR_bicubic/X2_crop')
+                val_folder = os.path.join(self.data_root, 'elegance', 'val/LR_bicubic/X2_crop')
+            else:
+                train_folder = os.path.join(self.data_root, 'elegance', 'train/LR_bicubic/X2')
+                val_folder = os.path.join(self.data_root, 'elegance', 'val/LR_bicubic/X2')
 
         self.file_list = []
         if self.training:
             subfolders = sorted(glob.glob(train_folder + '/*'))
             for subfolder in subfolders:
-                subfolder_file_list = sorted(glob.glob(subfolder + '/*'))
+                subfolder_file_list = sorted(glob.glob(subfolder + '/*.tif'))
                 subfolder_file_list = subfolder_file_list[2:-2]
                 self.file_list.extend(subfolder_file_list)
 
         else:
             subfolders = sorted(glob.glob(val_folder + '/*'))
             for subfolder in subfolders:
-                subfolder_file_list = sorted(glob.glob(subfolder + '/*'))
+                subfolder_file_list = sorted(glob.glob(subfolder + '/*.tif'))
                 subfolder_file_list = subfolder_file_list[:-2]
                 subfolder_file_list = subfolder_file_list[2::4]
                 self.file_list.extend(subfolder_file_list)
@@ -42,7 +50,6 @@ class Eleganceset(Dataset):
             transforms.ColorJitter(0.05, 0.05, 0.05, 0.05),
             transforms.ToTensor()
         ])
-        
 
     def __getitem__(self, index):
         '''
@@ -120,12 +127,12 @@ class Eleganceset(Dataset):
         return len(self.file_list)
 
 
-def get_loader(mode, data_root, batch_size, shuffle, num_workers, denoise=True, test_mode=None):
+def get_loader(mode, data_root, batch_size, shuffle, num_workers, denoise=True, shift=True, test_mode=None):
     if mode == 'train':
         is_training = True
     else:
         is_training = False
-    dataset = Eleganceset(data_root, is_training=is_training, denoise=denoise)
+    dataset = Eleganceset(data_root, is_training=is_training, denoise=denoise, shift=shift)
     if mode == 'train':
         return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers, pin_memory=True)
     else:

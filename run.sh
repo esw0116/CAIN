@@ -16,7 +16,7 @@
 python main.py \
     --exp_name CAIN_train \
     --dataset elegance \
-    --batch_size 16 \
+    --batch_size 4 \
     --test_batch_size 16 \
     --model cain \
     --depth 3 \
