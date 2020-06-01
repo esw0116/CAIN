@@ -42,6 +42,7 @@ def load_dataset(args, dataset_str, data_root, batch_size, test_batch_size, num_
         from data.aim import get_loader
     elif dataset_str == 'elegance':
         from data.elegance import get_loader
+        print(args.denoise, args.shift)
         train_loader = get_loader('train', data_root, batch_size, shuffle=True, num_workers=num_workers, denoise=args.denoise, shift=args.shift)
         test_loader = get_loader('test', data_root, test_batch_size, shuffle=False, num_workers=num_workers, denoise=args.denoise, shift=args.shift)
         return train_loader, test_loader

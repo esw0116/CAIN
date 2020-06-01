@@ -203,14 +203,20 @@ def test(args, epoch, eval_alpha=0.5):
                     # remove '.png' extension
                     fp = os.path.join(fp, paths[-1][:-4])
                     utils.save_image(out2[b, 0], "%s.tif" % fp)
-                    utils.save_image(out2[b, 0], "%s_linear.tif" % fp)
+                    utils.save_image(out2_linear[b, 0], "%s_linear.tif" % fp)
+
+
+            out2_ref = out2.clone()
 
             # Forward - GT1
+            im_cat = torch.stack((im1_ref, out2), dim=-1)
+            im_interp = F.interpolate(im_cat, size=(h,w,5), mode='trilinear', align_corners=True)
+
             #print(im1.mean(), im1_ref.mean(), out2.mean())
             out1, feats = model(im1_ref, out2)
             #print(out1.mean())
 
-            # Save loss valuesa
+            # Save loss values
             loss, loss_specific = criterion(out1, gt1, None, feats)
             for k, v in losses.items():
                 if k != 'total':
@@ -219,6 +225,9 @@ def test(args, epoch, eval_alpha=0.5):
 
             # Evaluate metrics
             utils.eval_metrics(out1, gt1, psnrs, ssims, lpips)
+
+            out_linear1 = im_interp[..., 2]
+            utils.eval_metrics(out_linear1, gt1, psnrs_linear, ssims_linear, lpips_linear)
 
             # Log examples that have bad performance
             if (psnrs.val < 30) and epoch > 50:
@@ -236,10 +245,13 @@ def test(args, epoch, eval_alpha=0.5):
                     # remove '.png' extension
                     fp = os.path.join(fp, paths[-1][:-4])
                     utils.save_image(out1[b, 0], "%s.tif" % fp)
-                    utils.save_image(out2[b, 0], "%s_linear.tif" % fp)
+                    utils.save_image(out1_linear[b, 0], "%s_linear.tif" % fp)
             
             # Forward - GT3
-            out3, feats = model(out2, im2_ref)
+            im_cat = torch.stack((out2_ref, im2_ref), dim=-1)
+            im_interp = F.interpolate(im_cat, size=(h,w,5), mode='trilinear', align_corners=True)
+
+            out3, feats = model(out2_ref, im2_ref)
             #print(out3.max(), out3.shape)
 
             # Save loss values
@@ -251,6 +263,9 @@ def test(args, epoch, eval_alpha=0.5):
 
             # Evaluate metrics
             utils.eval_metrics(out3, gt3, psnrs, ssims, lpips)
+
+            out_linear3 = im_interp[..., 2]
+            utils.eval_metrics(out_linear3, gt3, psnrs_linear, ssims_linear, lpips_linear)
 
             # Log examples that have bad performance
             if (psnrs.val < 30) and epoch > 50:
@@ -268,7 +283,7 @@ def test(args, epoch, eval_alpha=0.5):
                     # remove '.png' extension
                     fp = os.path.join(fp, paths[-1][:-4])
                     utils.save_image(out3[b, 0], "%s.tif" % fp)
-                    utils.save_image(out2[b, 0], "%s_linear.tif" % fp)
+                    utils.save_image(out3_linear[b, 0], "%s_linear.tif" % fp)
 
     # Print progress
     print('im_processed: {:d}/{:d} {:.3f}s   \r'.format(i + 1, len(test_loader), time.time() - t))

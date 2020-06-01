@@ -27,6 +27,9 @@ class Eleganceset(Dataset):
                 train_folder = os.path.join(self.data_root, 'elegance', 'train/LR_bicubic/X2')
                 val_folder = os.path.join(self.data_root, 'elegance', 'val/LR_bicubic/X2')
 
+        print(train_folder)
+        print(val_folder)
+
         self.file_list = []
         if self.training:
             subfolders = sorted(glob.glob(train_folder + '/*'))
