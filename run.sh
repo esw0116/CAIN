@@ -14,7 +14,7 @@
 #    --mode test
 
 #python main.py \
-#    --exp_name Elegance_Denoised_Shifted_4 \
+#    --exp_name Elegance_Denoised_Shifted_Scale4 \
 #    --dataset elegance \
 #    --batch_size 4 \
 #    --test_batch_size 16 \
@@ -27,8 +27,33 @@
 #    --denoise \
 #    --shift \
 
+#python main.py \
+#    --exp_name Elegance_Raw_Scale4 \
+#    --dataset elegance \
+#    --batch_size 4 \
+#    --test_batch_size 16 \
+#    --model cain \
+#    --depth 3 \
+#    --loss 1*L1 \
+#    --max_epoch 200 \
+#    --lr 0.0002 \
+#    --log_iter 100 \
+
+#python main.py \
+#    --exp_name Elegance_Denoised_Scale4 \
+#    --dataset elegance \
+#    --batch_size 4 \
+#    --test_batch_size 16 \
+#    --model cain \
+#    --depth 3 \
+#    --loss 1*L1 \
+#    --max_epoch 200 \
+#    --lr 0.0002 \
+#    --log_iter 100 \
+#    --denoise \
+
 python main.py \
-    --exp_name Elegance_Raw_4 \
+    --exp_name Elegance_Shifted_Scale4 \
     --dataset elegance \
     --batch_size 4 \
     --test_batch_size 16 \
@@ -38,4 +63,4 @@ python main.py \
     --max_epoch 200 \
     --lr 0.0002 \
     --log_iter 100 \
-
+    --shift \

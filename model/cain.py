@@ -54,15 +54,15 @@ class CAIN(nn.Module):
         self.decoder = Decoder(depth=depth)
 
     def forward(self, x1, x2):
-        x1, m1 = sub_mean(x1)
-        x2, m2 = sub_mean(x2)
+        x_1, m1 = sub_mean(x1)
+        x_2, m2 = sub_mean(x2)
 
         if not self.training:
-            paddingInput, paddingOutput = InOutPaddings(x1)
-            x1 = paddingInput(x1)
-            x2 = paddingInput(x2)
+            paddingInput, paddingOutput = InOutPaddings(x_1)
+            x_1 = paddingInput(x_1)
+            x_2 = paddingInput(x_2)
 
-        feats = self.encoder(x1, x2)
+        feats = self.encoder(x_1, x_2)
         out = self.decoder(feats)
 
         if not self.training:

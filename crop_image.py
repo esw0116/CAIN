@@ -4,11 +4,17 @@ import imageio
 import numpy as np
 import pandas as pd
 
-train_folder = os.path.join('data/dataset/Project_Samsung', 'elegance', 'train/LR_bicubic/X2_denoise')
-val_folder = os.path.join('data/dataset/Project_Samsung', 'elegance', 'val/LR_bicubic/X2_denoise')
+#train_folder = os.path.join('data/dataset/Project_Samsung', 'elegance', 'train/LR_bicubic/X2_denoise')
+#val_folder = os.path.join('data/dataset/Project_Samsung', 'elegance', 'val/LR_bicubic/X2_denoise')
 
-train_savefolder = os.path.join('data/dataset/Project_Samsung', 'elegance', 'train/LR_bicubic/X2_denoise_crop')
-val_savefolder = os.path.join('data/dataset/Project_Samsung', 'elegance', 'val/LR_bicubic/X2_denoise_crop')
+#train_savefolder = os.path.join('data/dataset/Project_Samsung', 'elegance', 'train/LR_bicubic/X2_denoise_crop')
+#val_savefolder = os.path.join('data/dataset/Project_Samsung', 'elegance', 'val/LR_bicubic/X2_denoise_crop')
+
+train_folder = os.path.join('data/dataset/Project_Samsung', 'elegance', 'train/LR_bicubic/X2')
+val_folder = os.path.join('data/dataset/Project_Samsung', 'elegance', 'val/LR_bicubic/X2')
+
+train_savefolder = os.path.join('data/dataset/Project_Samsung', 'elegance', 'train/LR_bicubic/X2_crop')
+val_savefolder = os.path.join('data/dataset/Project_Samsung', 'elegance', 'val/LR_bicubic/X2_crop')
 
 if not os.path.exists(train_savefolder):
     os.mkdir(train_savefolder)
@@ -18,7 +24,7 @@ if not os.path.exists(val_savefolder):
 
 
 for folder, savefolder in zip([train_folder, val_folder], [train_savefolder, val_savefolder]):
-    subfolders = sorted(glob.glob(train_folder + '/*'))
+    subfolders = sorted(glob.glob(folder + '/*'))
     for subfolder in subfolders:
         print(subfolder)
         basename = os.path.basename(subfolder)
